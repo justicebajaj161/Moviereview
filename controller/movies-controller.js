@@ -37,43 +37,49 @@ const getthemoviebyid=async(req,res)=>{
     res.json({message:"Movie Data",moviedetails})
 }
 
-const postuserrating=async(req,res)=>{
+const postuserrating = async (req, res) => {
+    const rating = req.body.ratesubmittion;
+    const userId = req.body.myid;
+    const movieId = req.body.id;
+  
     
-    const rating=req.body.ratesubmittion
-    const id =req.body.myid
-    const movieid=req.body.id
-    const review=await new Review( { rating:rating,user:id,movie:movieid} ).save();
-    const totalratings=await Review.find({movie:movieid})
-
-    
-    const ratings=totalratings.map((singlerating)=>{
-        return singlerating.rating
-    })
-    console.log(ratings)
-
-    ratings.push(parseInt(rating))
-    console.log(ratings)
-
-    // const average = ratings => ratings.reduce((a, b) => a + b) / ratings.length;
-
+    if (!rating) {
+      return res.json({ message: "Please provide a rating value" });
+    }
+  
+   
+    const existingReview = await Review.findOne({ user: userId, movie: movieId });
+    if (existingReview) {
+      return res.json({ message: "User has already submitted a review for this movie" });
+    }
+  
+    const review = await new Review({ rating: rating, user: userId, movie: movieId }).save();
+    const totalRatings = await Review.find({ movie: movieId });
+  
+    const ratings = totalRatings.map((singlerating) => {
+      return singlerating.rating;
+    });
+  
+    ratings.push(parseInt(rating));
+  
     var total = 0;
-for(var i = 0; i < ratings.length; i++) {
-    total += ratings[i];
-}
-var avg = total / ratings.length;
-
-
-    console.log(avg);
-//     console.log(rating)
-const finalaverage=Math.ceil(avg)
- 
-
-
-    
-    const updateaaverga=await Movie.findByIdAndUpdate({_id:movieid},{AverageRating:finalaverage,TotalRatings:totalratings.length},{new:true})
-   return  res.json({message:"rating posted"})
-    
-}
+    for (var i = 0; i < ratings.length; i++) {
+      total += ratings[i];
+    }
+    var avg = total / ratings.length;
+  
+    const finalaverage = Math.ceil(avg);
+  
+    const updateAverage = await Movie.findByIdAndUpdate(
+      { _id: movieId },
+      { AverageRating: finalaverage, TotalRatings: totalRatings.length },
+      { new: true }
+    );
+  
+    return res.json({ message: "Rating posted" });
+  };
+  
+  
 
 
 export {postMovie,getallmovies,getthemoviebyid,postuserrating}
